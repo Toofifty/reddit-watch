@@ -1,1 +1,1 @@
-Watch a subreddit for specific keywords or regexes.
+Watch a subreddit for specific keywords

@@ -93,4 +93,5 @@ const check = () => {
 }
 
 check()
-// setInterval(check, 60000)
+// 10 minutes
+setInterval(check, 1000 * 60 * 10)
