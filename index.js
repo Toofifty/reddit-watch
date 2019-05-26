@@ -3,6 +3,11 @@ import nodemailer from 'nodemailer'
 import request from 'request'
 import fs from 'fs'
 import smtp from 'nodemailer-smtp-transport'
+import showdown from 'showdown'
+
+const markdown = new showdown.Converter({
+    tables: true
+})
 
 const subreddits = process.env.SUBREDDITS.split(',')
 const keywords = process.env.KEYWORDS.split(',').map(kw => kw.toLowerCase())
@@ -12,7 +17,7 @@ const alerted = []
 fs.readFile('./alerted', 'utf8', (err, data) => {
     if (err) {
         fs.writeFile('./alerted', '', err => {
-            if (err) console.err
+            if (err) console.error(err)
         })
     }
     if (data) data.split(',').forEach(id => alerted.push(id))
@@ -23,14 +28,14 @@ const createTransport = () => {
         service: 'gmail',
         host: 'smtp.gmail.com',
         auth: {
-            user: process.env.SEND_FROM_USER,
+            user: process.env.SEND_FROM_EMAIL,
             pass: process.env.SEND_FROM_PASS
         }
     }))
 }
 
 const mail = {
-    from: `reddit-watch <${process.env.SEND_FROM_USER}>`,
+    from: `reddit-watch <${process.env.SEND_FROM_EMAIL}>`,
     to: process.env.SEND_TO,
     subject: 'no subject set',
     text: 'no text set',
@@ -47,7 +52,7 @@ const alert = (post, matches) => {
         html: `<strong>The following keywords were found</strong>:<br>${matches.join(', ')}<br>
         <strong>Subreddit</strong>:<br>${post.subreddit_name_prefixed}<br>
         <strong>Post title</strong>:<br>${post.title}<br>
-        <strong>Post text</strong>:<br>${post.selftext}<br>
+        <strong>Post text</strong>:<br>${markdown.makeHtml(post.selftext)}<br>
         ${image && `<img src="${image.source.url}"/>` || ''}<br>
         <strong>Post URL</strong>:<br>${post.url}<br>`
     }, (err, res) => {
@@ -61,7 +66,7 @@ const alert = (post, matches) => {
 
     alerted.push(post.id)
     fs.writeFile('./alerted', alerted.join(','), err => {
-        if (err) console.err
+        if (err) console.error(err)
     })
 }
 
